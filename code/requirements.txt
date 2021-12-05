@@ -1,0 +1,6 @@
+pandas
+jupyterlab
+notebook
+matplotlib
+awsglue
+boto3

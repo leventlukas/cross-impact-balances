@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: general-purpose-secret
+type: kubernetes.io/opaque
+data:
+  # You can include additional key value pairs as you do with Opaque Secrets
+  extra: YmFyCg==
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devbase-deployment
+  labels:
+    app: devbase
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: devbase
+  template:
+    metadata:
+      labels:
+        app: devbase
+    spec:
+      containers:
+      - name: devbase-notebook-container
+        image: leventlukas/devbase:0.3.3
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8404
+        env:
+        - name: DEMO_GREETING
+          value: "Hello from the environment"
+        volumeMounts:
+        - name: secret-volume
+          mountPath: "/mnt/secret"
+          readOnly: true
+        - name: code
+          mountPath: "/usr/src/app/code"
+      volumes:
+      - name: secret-volume
+        secret:
+          secretName: general-purpose-secret
+      - name: code
+        hostPath:
+          path: /Users/leventlukas/git/devbase/code  
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: davebase-service
+  labels:
+    app: devbase
+spec:
+  type: NodePort
+  selector:
+    app: devbase
+  ports:
+    - protocol: TCP
+      port: 8402
+      targetPort: 8404
+      nodePort: 30000
+
